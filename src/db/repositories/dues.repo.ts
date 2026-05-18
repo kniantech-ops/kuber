@@ -108,6 +108,34 @@ export const duesRepo = {
       instalmentId,
     );
   },
+  async applyMonthInstalment(chitId: string, monthId: string, dueAmount: number): Promise<void> {
+    const instalments = await nativeDb.getAllAsync<{
+      id: string;
+      paid_amount: number;
+    }>(
+      `SELECT id, paid_amount
+       FROM instalments
+       WHERE chit_id = ? AND month_id = ? AND is_deleted = 0`,
+      chitId,
+      monthId,
+    );
+
+    for (const instalment of instalments) {
+      const balance = Math.max(dueAmount - instalment.paid_amount, 0);
+      const status = instalment.paid_amount === 0 ? 'pending' : balance === 0 ? 'paid' : 'partial';
+
+      await nativeDb.runAsync(
+        `UPDATE instalments
+         SET due_amount = ?, balance = ?, status = ?, updated_at = ?
+         WHERE id = ?`,
+        dueAmount,
+        balance,
+        status,
+        new Date().toISOString(),
+        instalment.id,
+      );
+    }
+  },
   async getChitRollup(chitId: string): Promise<{
     expected: number;
     collected: number;

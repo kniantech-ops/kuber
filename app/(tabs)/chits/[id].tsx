@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AmountText } from '@/components/ui/AmountText';
 import { AppScreen } from '@/components/ui/AppScreen';
@@ -53,7 +53,23 @@ export default function ChitDetailsScreen() {
             key={month.id}
             title={`Month ${month.monthNumber}`}
             subtitle={`${formatDate(month.monthDate)} • Prize ${Math.round(month.netPrizeAmount / 100).toLocaleString('en-IN')}`}
-            right={<StatusBadge status={month.status === 'pending' ? 'pending' : 'paid'} />}
+            right={
+              month.status === 'pending' ? (
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: '/modals/auction-entry',
+                      params: { chitId: id, monthId: month.id },
+                    })
+                  }
+                  style={styles.actionChip}
+                >
+                  <AppText style={styles.actionChipText}>Auction</AppText>
+                </Pressable>
+              ) : (
+                <StatusBadge status={month.status === 'auction_done' ? 'paid' : 'pending'} />
+              )
+            }
           />
         ))}
         {months.length === 0 ? <AppText>No schedule generated yet.</AppText> : null}
@@ -115,5 +131,18 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 13,
     fontWeight: '600',
+  },
+  actionChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: `${colors.gold}22`,
+    borderWidth: 1,
+    borderColor: colors.gold,
+  },
+  actionChipText: {
+    color: colors.gold,
+    fontWeight: '700',
+    fontSize: 12,
   },
 });
